@@ -1,4 +1,4 @@
-spring.datasource.url=jdbc:mysql://localhost:3306/db_medagenda
+spring.datasource.url=jdbc:mysql://localhost:3306/db_medagenda?serverTimezone=America/Sao_Paulo
 spring.datasource.username=seu_usuario
 spring.datasource.password=sua_senha
 
