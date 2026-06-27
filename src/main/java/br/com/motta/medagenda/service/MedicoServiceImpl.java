@@ -3,7 +3,7 @@ package br.com.motta.medagenda.service;
 import br.com.motta.medagenda.dto.MedicoRequestDTO;
 import br.com.motta.medagenda.dto.MedicoResponseDTO;
 import br.com.motta.medagenda.dto.MedicoUpdateDTO;
-import br.com.motta.medagenda.exception.RecursoNaoEnconstradoException;
+import br.com.motta.medagenda.exception.RecursoNaoEncontradoException;
 import br.com.motta.medagenda.exception.RegraDeNegocioException;
 import br.com.motta.medagenda.mapper.MedicoMapper;
 import br.com.motta.medagenda.model.Medico;
@@ -29,7 +29,7 @@ public class MedicoServiceImpl implements MedicoService {
 
     @Override
     public MedicoResponseDTO cadastrar(MedicoRequestDTO dto) {
-        Usuario usuario = usuarioRepository.findById(dto.usuarioId()).orElseThrow(() -> new RecursoNaoEnconstradoException("Usuário não encontrado"));
+        Usuario usuario = usuarioRepository.findById(dto.usuarioId()).orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
         if (medicoRepository.findByCrm(dto.crm()).isPresent()){
             throw new RegraDeNegocioException("Já existe um medico com esse crm");
         }
@@ -44,14 +44,14 @@ public class MedicoServiceImpl implements MedicoService {
     @Override
     @Transactional
     public MedicoResponseDTO atualizar(Long id, MedicoUpdateDTO dto) {
-        Medico medicoAtualizado = medicoRepository.findById(id).orElseThrow(() -> new RecursoNaoEnconstradoException("Medico não encontrado"));
+        Medico medicoAtualizado = medicoRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Medico não encontrado"));
         MedicoMapper.updateEntityFromDTO(dto, medicoAtualizado);
         return MedicoMapper.toDTO(medicoAtualizado);
     }
 
     @Override
     public void excluir(Long id) {
-        Medico medico = medicoRepository.findById(id).orElseThrow(() -> new RecursoNaoEnconstradoException("Medico não encontrado"));
+        Medico medico = medicoRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Medico não encontrado"));
         medicoRepository.delete(medico);
     }
 
@@ -69,7 +69,7 @@ public class MedicoServiceImpl implements MedicoService {
 
     @Override
     public MedicoResponseDTO buscarPorId(Long id) {
-        Medico medico = medicoRepository.findById(id).orElseThrow(() -> new RecursoNaoEnconstradoException("Médico não encontrado"));
+        Medico medico = medicoRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Médico não encontrado"));
         return MedicoMapper.toDTO(medico);
     }
 }

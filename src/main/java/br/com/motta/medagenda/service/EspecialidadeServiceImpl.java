@@ -2,7 +2,7 @@ package br.com.motta.medagenda.service;
 
 import br.com.motta.medagenda.dto.EspecialidadeRequestDTO;
 import br.com.motta.medagenda.dto.EspecialidadeResponseDTO;
-import br.com.motta.medagenda.exception.RecursoNaoEnconstradoException;
+import br.com.motta.medagenda.exception.RecursoNaoEncontradoException;
 import br.com.motta.medagenda.exception.RegraDeNegocioException;
 import br.com.motta.medagenda.mapper.EspecialidadeMapper;
 import br.com.motta.medagenda.model.Especialidade;
@@ -37,7 +37,7 @@ public class EspecialidadeServiceImpl implements EspecialidadeService {
     @Transactional
     public EspecialidadeResponseDTO atualizar(Long id, EspecialidadeRequestDTO especialidadeDTO) {
             Especialidade especialidade = especialidadeRepository.findById(id)
-                    .orElseThrow(() -> new RecursoNaoEnconstradoException("Especialidade não encontrada."));
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Especialidade não encontrada."));
            EspecialidadeMapper.updateEntityFromDTO(especialidadeDTO, especialidade);
            return EspecialidadeMapper.toDTO(especialidade);
     }
@@ -45,7 +45,7 @@ public class EspecialidadeServiceImpl implements EspecialidadeService {
     @Override
     public void excluir(Long id) {
         Especialidade especialidade = especialidadeRepository.findById(id)
-                .orElseThrow(() -> new RecursoNaoEnconstradoException("Especialidade não encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Especialidade não encontrada."));
         especialidadeRepository.delete(especialidade);
     }
 
@@ -64,7 +64,7 @@ public class EspecialidadeServiceImpl implements EspecialidadeService {
     @Override
     public EspecialidadeResponseDTO buscarPorId(Long id) {
         Especialidade especialidade = especialidadeRepository.findById(id)
-                .orElseThrow(() -> new RecursoNaoEnconstradoException("Especialidade não encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Especialidade não encontrada."));
         return EspecialidadeMapper.toDTO(especialidade);
     }
 }
