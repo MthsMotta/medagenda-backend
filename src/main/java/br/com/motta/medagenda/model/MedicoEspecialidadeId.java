@@ -26,4 +26,9 @@ public class MedicoEspecialidadeId implements Serializable {
     public int hashCode() {
         return Objects.hash(medicoId, especialidadeId);
     }
+
+    public MedicoEspecialidadeId(Long medicoId, Long especialidadeId) {
+        this.medicoId = medicoId;
+        this.especialidadeId = especialidadeId;
+    }
 }
