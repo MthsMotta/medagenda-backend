@@ -10,12 +10,12 @@ import java.util.Objects;
 public class ConsultaSpecification {
 
     public static Specification<Consulta> comPacienteId(Long pacienteId) {
-        return (root, query, criteriaBuilder) -> {
-            if (Objects.isNull(pacienteId)) {
-                return null;
-            }
-            return criteriaBuilder.equal(root.get("paciente").get("id"), pacienteId);
-        };
+     return (root, query, criteriaBuilder) -> {
+         if (Objects.isNull(pacienteId)) {
+             return null;
+         }
+         return criteriaBuilder.equal(root.get("paciente").get("id"), pacienteId);
+     };
     }
 
     public static Specification<Consulta> comMedicoId(Long medicoId) {
