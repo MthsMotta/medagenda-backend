@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/horariostrabalhos")
+@RequestMapping("/agenda")
 public class HorarioTrabalhoController {
 
     private final HorarioTrabalhoService horarioTrabalhoService;

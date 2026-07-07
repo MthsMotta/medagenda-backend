@@ -1,5 +1,6 @@
 package br.com.motta.medagenda.service;
 
+import br.com.motta.medagenda.dto.CadastroDTO;
 import br.com.motta.medagenda.dto.UsuarioResponseDTO;
 import br.com.motta.medagenda.dto.UsuarioUpdateDTO;
 import br.com.motta.medagenda.exception.RecursoNaoEncontradoException;
@@ -13,6 +14,7 @@ import br.com.motta.medagenda.repository.ConsultaRepository;
 import br.com.motta.medagenda.repository.MedicoRepository;
 import br.com.motta.medagenda.repository.PacienteRepository;
 import br.com.motta.medagenda.repository.UsuarioRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,16 @@ public class UsuarioServiceImpl implements UsuarioService {
         this.pacienteRepository = pacienteRepository;
         this.medicoRepository = medicoRepository;
         this.consultaRepository = consultaRepository;
+    }
+
+
+    @Override
+    public UsuarioResponseDTO cadastrar(CadastroDTO cadastro) {
+        if (usuarioRepository.findByEmail(cadastro.email()) != null) {
+            throw new RegraDeNegocioException("Ja existe um usuario com esse email.");
+        }
+        Usuario usuario = UsuarioMapper.toEntity(cadastro);
+        return UsuarioMapper.toDTO(usuarioRepository.save(usuario));
     }
 
     @Override
