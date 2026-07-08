@@ -1,5 +1,6 @@
 package br.com.motta.medagenda.config;
 
+import br.com.motta.medagenda.security.SecurityFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,10 +13,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
+
+    private final SecurityFilter securityFilter;
+
+    public WebSecurityConfig(SecurityFilter securityFilter) {
+        this.securityFilter = securityFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -23,6 +31,8 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/usuarios/{id}").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/usuarios/{id}").authenticated()
@@ -31,7 +41,6 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/medicos/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/medicos/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/medicos/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/pacientes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/pacientes/**").hasAnyRole("ADMIN", "MEDICO")
                         .requestMatchers(HttpMethod.PUT, "/pacientes/{id}").hasAnyRole("PACIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/pacientes/{id}").hasRole("ADMIN")
@@ -53,7 +62,9 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/consultas/{id}/realizada").hasAnyRole("ADMIN", "MEDICO")
                         .requestMatchers(HttpMethod.PUT, "/consultas/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/consultas/{id}").authenticated()
+                        .anyRequest().authenticated()
                 )
+                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

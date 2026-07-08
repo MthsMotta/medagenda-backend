@@ -1,6 +1,6 @@
 package br.com.motta.medagenda.mapper;
 
-import br.com.motta.medagenda.dto.PacienteRequestDTO;
+import br.com.motta.medagenda.dto.CadastroDTO;
 import br.com.motta.medagenda.dto.PacienteResponseDTO;
 import br.com.motta.medagenda.dto.PacienteUpdateDTO;
 import br.com.motta.medagenda.model.Paciente;
@@ -12,7 +12,7 @@ public class PacienteMapper {
         return new PacienteResponseDTO(paciente.getId(), paciente.getUsuario().getNome(), paciente.getDataNascimento(), paciente.getTelefone());
     }
 
-    public static Paciente toEntity(PacienteRequestDTO dto, Usuario usuario) {
+    public static Paciente toEntity(CadastroDTO dto, Usuario usuario) {
         Paciente paciente = new Paciente();
         paciente.setCpf(dto.cpf());
         paciente.setDataNascimento(dto.dataNascimento());

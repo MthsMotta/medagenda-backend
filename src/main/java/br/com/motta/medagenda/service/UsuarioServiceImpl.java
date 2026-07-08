@@ -1,10 +1,12 @@
 package br.com.motta.medagenda.service;
 
 import br.com.motta.medagenda.dto.CadastroDTO;
+import br.com.motta.medagenda.dto.UsuarioAdminRequestDTO;
 import br.com.motta.medagenda.dto.UsuarioResponseDTO;
 import br.com.motta.medagenda.dto.UsuarioUpdateDTO;
 import br.com.motta.medagenda.exception.RecursoNaoEncontradoException;
 import br.com.motta.medagenda.exception.RegraDeNegocioException;
+import br.com.motta.medagenda.mapper.PacienteMapper;
 import br.com.motta.medagenda.mapper.UsuarioMapper;
 import br.com.motta.medagenda.model.Medico;
 import br.com.motta.medagenda.model.Paciente;
@@ -15,6 +17,7 @@ import br.com.motta.medagenda.repository.MedicoRepository;
 import br.com.motta.medagenda.repository.PacienteRepository;
 import br.com.motta.medagenda.repository.UsuarioRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,23 +31,40 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final PacienteRepository pacienteRepository;
     private final MedicoRepository medicoRepository;
     private final ConsultaRepository consultaRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, PacienteRepository pacienteRepository, MedicoRepository medicoRepository, ConsultaRepository consultaRepository) {
+    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, PacienteRepository pacienteRepository, MedicoRepository medicoRepository, ConsultaRepository consultaRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.pacienteRepository = pacienteRepository;
         this.medicoRepository = medicoRepository;
         this.consultaRepository = consultaRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
 
     @Override
+    @Transactional
     public UsuarioResponseDTO cadastrar(CadastroDTO cadastro) {
-        if (usuarioRepository.findByEmail(cadastro.email()) != null) {
+        if (usuarioRepository.findByEmail(cadastro.email()).isPresent()) {
             throw new RegraDeNegocioException("Ja existe um usuario com esse email.");
         }
-        Usuario usuario = UsuarioMapper.toEntity(cadastro);
-        return UsuarioMapper.toDTO(usuarioRepository.save(usuario));
+        Usuario usuario = UsuarioMapper.toEntity(cadastro, passwordEncoder.encode(cadastro.senha()));
+        Usuario salvo = usuarioRepository.save(usuario);
+        Paciente paciente = PacienteMapper.toEntity(cadastro, salvo);
+        pacienteRepository.save(paciente);
+        return UsuarioMapper.toDTO(salvo);
     }
+
+    @Override
+    public UsuarioResponseDTO cadastrarAdmin(UsuarioAdminRequestDTO cadastroAdmin) {
+        if (usuarioRepository.findByEmail(cadastroAdmin.email()).isPresent()) {
+            throw new RegraDeNegocioException("Ja existe um usuario com esse email.");
+        }
+        Usuario usuario = UsuarioMapper.toEntity(cadastroAdmin, passwordEncoder.encode(cadastroAdmin.senha()));
+        Usuario salvo = usuarioRepository.save(usuario);
+        return UsuarioMapper.toDTO(salvo);
+    }
+
 
     @Override
     @Transactional

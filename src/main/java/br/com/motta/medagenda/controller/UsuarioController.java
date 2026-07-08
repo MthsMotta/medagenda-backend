@@ -1,9 +1,11 @@
 package br.com.motta.medagenda.controller;
 
+import br.com.motta.medagenda.dto.UsuarioAdminRequestDTO;
 import br.com.motta.medagenda.dto.UsuarioResponseDTO;
 import br.com.motta.medagenda.dto.UsuarioUpdateDTO;
 import br.com.motta.medagenda.service.UsuarioService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +19,11 @@ public class UsuarioController {
 
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
+    }
+
+    @PostMapping
+    public ResponseEntity<UsuarioResponseDTO> cadastrar(@RequestBody @Valid UsuarioAdminRequestDTO cadastroAdmin) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.cadastrarAdmin(cadastroAdmin));
     }
 
     @GetMapping

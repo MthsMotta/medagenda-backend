@@ -1,15 +1,12 @@
 package br.com.motta.medagenda.service;
 
-import br.com.motta.medagenda.dto.PacienteRequestDTO;
 import br.com.motta.medagenda.dto.PacienteResponseDTO;
 import br.com.motta.medagenda.dto.PacienteUpdateDTO;
 import br.com.motta.medagenda.exception.RecursoNaoEncontradoException;
 import br.com.motta.medagenda.exception.RegraDeNegocioException;
 import br.com.motta.medagenda.mapper.PacienteMapper;
 import br.com.motta.medagenda.model.Paciente;
-import br.com.motta.medagenda.model.Usuario;
 import br.com.motta.medagenda.repository.PacienteRepository;
-import br.com.motta.medagenda.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,26 +17,9 @@ import java.util.Optional;
 public class PacienteServiceImpl implements PacienteService {
 
     private final PacienteRepository pacienteRepository;
-    private final UsuarioRepository usuarioRepository;
 
-    public PacienteServiceImpl(PacienteRepository pacienteRepository, UsuarioRepository usuarioRepository) {
+    public PacienteServiceImpl(PacienteRepository pacienteRepository) {
         this.pacienteRepository = pacienteRepository;
-        this.usuarioRepository = usuarioRepository;
-    }
-
-
-    @Override
-    public PacienteResponseDTO cadastrar(PacienteRequestDTO dto) {
-        Usuario usuario = usuarioRepository.findById(dto.usuarioId()).orElseThrow(() -> new RecursoNaoEncontradoException("Usuario não encontrado"));
-        if(pacienteRepository.findByCpf(dto.cpf()).isPresent()){
-            throw new RegraDeNegocioException("Cpf já cadastrado");
-        }
-        if (pacienteRepository.findByUsuarioId(dto.usuarioId()).isPresent()) {
-            throw new RegraDeNegocioException("Usuario já vinculado a um paciente");
-        }
-        Paciente paciente = PacienteMapper.toEntity(dto, usuario);
-        Paciente salvo =  pacienteRepository.save(paciente);
-        return PacienteMapper.toDTO(salvo);
     }
 
     @Override
