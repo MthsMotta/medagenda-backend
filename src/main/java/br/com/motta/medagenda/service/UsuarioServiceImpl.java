@@ -8,20 +8,18 @@ import br.com.motta.medagenda.exception.RecursoNaoEncontradoException;
 import br.com.motta.medagenda.exception.RegraDeNegocioException;
 import br.com.motta.medagenda.mapper.PacienteMapper;
 import br.com.motta.medagenda.mapper.UsuarioMapper;
-import br.com.motta.medagenda.model.Medico;
-import br.com.motta.medagenda.model.Paciente;
-import br.com.motta.medagenda.model.StatusConsulta;
-import br.com.motta.medagenda.model.Usuario;
+import br.com.motta.medagenda.model.*;
 import br.com.motta.medagenda.repository.ConsultaRepository;
 import br.com.motta.medagenda.repository.MedicoRepository;
 import br.com.motta.medagenda.repository.PacienteRepository;
 import br.com.motta.medagenda.repository.UsuarioRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -70,6 +68,13 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public UsuarioResponseDTO atualizar(Long id, UsuarioUpdateDTO dto) {
         Usuario usuarioAtualizado = usuarioRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if(usuarioLogado == null){
+            throw new RegraDeNegocioException("Usuario nao autenticado");
+        }
+        if(!(usuarioLogado.getId().equals(id) || usuarioLogado.getRole() == Role.ADMIN)) {
+            throw new RegraDeNegocioException("Apenas o dono da conta e admins podem atualizar o cadastro");
+        }
         UsuarioMapper.updateEntityFromDTO(dto, usuarioAtualizado);
         return UsuarioMapper.toDTO(usuarioAtualizado);
     }

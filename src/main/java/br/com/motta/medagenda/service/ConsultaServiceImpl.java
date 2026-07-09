@@ -6,10 +6,7 @@ import br.com.motta.medagenda.dto.ConsultaUpdateDTO;
 import br.com.motta.medagenda.exception.RecursoNaoEncontradoException;
 import br.com.motta.medagenda.exception.RegraDeNegocioException;
 import br.com.motta.medagenda.mapper.ConsultaMapper;
-import br.com.motta.medagenda.model.Consulta;
-import br.com.motta.medagenda.model.Medico;
-import br.com.motta.medagenda.model.Paciente;
-import br.com.motta.medagenda.model.StatusConsulta;
+import br.com.motta.medagenda.model.*;
 import br.com.motta.medagenda.repository.ConsultaRepository;
 import br.com.motta.medagenda.repository.MedicoRepository;
 import br.com.motta.medagenda.repository.PacienteRepository;
@@ -17,11 +14,13 @@ import br.com.motta.medagenda.specification.ConsultaSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ConsultaServiceImpl implements ConsultaService {
@@ -76,6 +75,15 @@ public class ConsultaServiceImpl implements ConsultaService {
     @Override
     public void excluir(Long id) {
         Consulta consulta = consultaRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Consulta não encontrada"));
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if(usuarioLogado == null){
+            throw new RegraDeNegocioException("Usuario não autenticado");
+        }
+        if(!(usuarioLogado.getId().equals(consulta.getPaciente().getUsuario().getId()) ||
+                usuarioLogado.getId().equals(consulta.getMedico().getUsuario().getId()) ||
+                usuarioLogado.getRole() == Role.ADMIN)) {
+            throw new RegraDeNegocioException("Apenas o paciente ou medico da consulta ou admins podem cancela-la");
+        }
         consultaRepository.delete(consulta);
     }
 
@@ -102,6 +110,13 @@ public class ConsultaServiceImpl implements ConsultaService {
         if (consulta.getStatusConsulta() != StatusConsulta.AGENDADA) {
             throw new RegraDeNegocioException("Só é possível confirmar consultas com status AGENDADA");
         }
+        var usuarioLogado = (Usuario)  Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if(usuarioLogado == null){
+            throw new RegraDeNegocioException("Usuario nao autenticado");
+        }
+        if(!(usuarioLogado.getId().equals(consulta.getPaciente().getUsuario().getId()) || usuarioLogado.getRole() == Role.ADMIN)){
+            throw new RegraDeNegocioException("Apenas o paciente da consulta ou admins podem confirma-la");
+        }
         consulta.setStatusConsulta(StatusConsulta.CONFIRMADA);
         return ConsultaMapper.toDto(consulta);
     }
@@ -113,6 +128,15 @@ public class ConsultaServiceImpl implements ConsultaService {
         if (consulta.getStatusConsulta() == StatusConsulta.REALIZADA || consulta.getStatusConsulta() == StatusConsulta.CANCELADA) {
             throw new RegraDeNegocioException("Só é possível cancelar consultas com status AGENDADA ou CONFIRMADA");
         }
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if(usuarioLogado == null){
+            throw new RegraDeNegocioException("Usuario nao autenticado");
+        }
+        if(!(usuarioLogado.getId().equals(consulta.getPaciente().getUsuario().getId()) ||
+                usuarioLogado.getId().equals(consulta.getMedico().getUsuario().getId()) ||
+                usuarioLogado.getRole() == Role.ADMIN)) {
+            throw new RegraDeNegocioException("Apenas o paciente ou medicos da consulta ou admins podem cancela-la");
+        }
         consulta.setStatusConsulta(StatusConsulta.CANCELADA);
         return ConsultaMapper.toDto(consulta);
     }
@@ -123,6 +147,13 @@ public class ConsultaServiceImpl implements ConsultaService {
         Consulta consulta = consultaRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Consulta não encontrada"));
         if (consulta.getStatusConsulta() != StatusConsulta.CONFIRMADA) {
             throw new RegraDeNegocioException("Só é possível realizar consultas com status CONFIRMADA");
+        }
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if(usuarioLogado == null){
+            throw new RegraDeNegocioException("Usuario nao autenticado");
+        }
+        if(!(usuarioLogado.getId().equals(consulta.getMedico().getUsuario().getId()) || usuarioLogado.getRole() == Role.ADMIN)) {
+            throw new RegraDeNegocioException("Apenas o medico da consulta ou admins podem marca-la como realizada");
         }
         consulta.setStatusConsulta(StatusConsulta.REALIZADA);
         return ConsultaMapper.toDto(consulta);
