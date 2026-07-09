@@ -47,6 +47,14 @@ public class ConsultaServiceImpl implements ConsultaService {
         if (dto.dataHora().isBefore(LocalDateTime.now())) {
             throw new RegraDeNegocioException("A data e hora do agendamento estão no passado");
         }
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if(usuarioLogado.getRole() == Role.PACIENTE){
+            Paciente pacienteLogado = pacienteRepository.findByUsuarioId(usuarioLogado.getId()).orElseThrow(()
+                    -> new RecursoNaoEncontradoException("Paciente nao encontrado"));
+            if(!pacienteLogado.getId().equals(dto.idPaciente())){
+                throw new RegraDeNegocioException("Voce so pode marcar consultas para si mesmo");
+            }
+        }
         LocalDateTime inicioDoDia = dto.dataHora().toLocalDate().atStartOfDay();
         LocalDateTime fimDoDia = dto.dataHora().toLocalDate().atTime(23, 59, 59);
         List<Consulta> consultasExistentes = consultaRepository.findByMedicoIdAndDataHoraBetween(dto.idMedico(), inicioDoDia, fimDoDia);
@@ -94,6 +102,19 @@ public class ConsultaServiceImpl implements ConsultaService {
                                                  LocalDateTime inicio,
                                                  LocalDateTime fim,
                                                  Pageable pageable) {
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if(usuarioLogado.getRole() == Role.PACIENTE){
+            Paciente paciente = pacienteRepository.findByUsuarioId(usuarioLogado.getId()).orElseThrow(()
+                    -> new RecursoNaoEncontradoException("Paciente nao encontrado para o usuario logado"));
+            pacienteId = paciente.getId();
+            medicoId = null;
+        }
+        if(usuarioLogado.getRole() == Role.MEDICO){
+            Medico medico = medicoRepository.findByUsuarioId(usuarioLogado.getId()).orElseThrow(()
+                    -> new RecursoNaoEncontradoException("Medico nao encontrado para o usuario logado"));
+            medicoId = medico.getId();
+            pacienteId = null;
+        }
         Specification<Consulta> spec = Specification
                 .where(ConsultaSpecification.comMedicoId(medicoId))
                 .and(ConsultaSpecification.comPacienteId(pacienteId))
@@ -162,6 +183,15 @@ public class ConsultaServiceImpl implements ConsultaService {
     @Override
     public ConsultaResponseDTO buscarPorId(Long id) {
         Consulta consulta = consultaRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Consulta não encontrada"));
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if(usuarioLogado == null){
+            throw new RegraDeNegocioException("Usuario nao autenticado");
+        }
+        if(!(usuarioLogado.getId().equals(consulta.getPaciente().getUsuario().getId()) ||
+                usuarioLogado.getId().equals(consulta.getMedico().getUsuario().getId()) ||
+                usuarioLogado.getRole() == Role.ADMIN)){
+            throw new RegraDeNegocioException("Apenas o paciente ou medico da consulta ou admins podem buscar-la");
+        }
         return ConsultaMapper.toDto(consulta);
     }
 }
