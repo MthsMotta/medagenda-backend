@@ -7,4 +7,5 @@ spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 spring.jpa.properties.hibernate.generate_statistics=true
 
+# A chave secreta deve ter no minimo 32 bytes (256 bits) para uso com HS256
 api.security.token.secret=sua_chave_secreta_aqui
