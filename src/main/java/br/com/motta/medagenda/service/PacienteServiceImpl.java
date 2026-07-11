@@ -5,9 +5,9 @@ import br.com.motta.medagenda.dto.PacienteUpdateDTO;
 import br.com.motta.medagenda.exception.RecursoNaoEncontradoException;
 import br.com.motta.medagenda.exception.RegraDeNegocioException;
 import br.com.motta.medagenda.mapper.PacienteMapper;
-import br.com.motta.medagenda.model.Paciente;
-import br.com.motta.medagenda.model.Role;
-import br.com.motta.medagenda.model.Usuario;
+import br.com.motta.medagenda.model.*;
+import br.com.motta.medagenda.repository.ConsultaRepository;
+import br.com.motta.medagenda.repository.MedicoRepository;
 import br.com.motta.medagenda.repository.PacienteRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,9 +21,13 @@ import java.util.Optional;
 public class PacienteServiceImpl implements PacienteService {
 
     private final PacienteRepository pacienteRepository;
+    private final ConsultaRepository consultaRepository;
+    private final MedicoRepository medicoRepository;
 
-    public PacienteServiceImpl(PacienteRepository pacienteRepository) {
+    public PacienteServiceImpl(PacienteRepository pacienteRepository, ConsultaRepository consultaRepository, MedicoRepository medicoRepository) {
         this.pacienteRepository = pacienteRepository;
+        this.consultaRepository = consultaRepository;
+        this.medicoRepository = medicoRepository;
     }
 
     @Override
@@ -60,6 +64,14 @@ public class PacienteServiceImpl implements PacienteService {
     @Override
     public PacienteResponseDTO buscarPorId(Long id) {
         Paciente paciente = pacienteRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Paciente não encontrado"));
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if (usuarioLogado == null) {
+            throw new RegraDeNegocioException("Usuario nao autenticado");
+        }
+        if (!(usuarioLogado.getId().equals(paciente.getUsuario().getId())
+                || usuarioLogado.getRole() == Role.ADMIN)) {
+            throw new RegraDeNegocioException("Apenas o paciente ou admins tem acesso ao seu perfil");
+        }
         return PacienteMapper.toDTO(paciente);
     }
 }

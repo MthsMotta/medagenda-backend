@@ -104,6 +104,13 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public UsuarioResponseDTO buscarPorId(Long id) {
         Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+        var usuarioLogado = (Usuario) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        if (usuarioLogado == null){
+            throw new RegraDeNegocioException("Usuario nao autenticado");
+        }
+        if(!(usuarioLogado.getId().equals(id) || usuarioLogado.getRole() == Role.ADMIN)) {
+            throw new RegraDeNegocioException("Apenas o dono da conta e admins podem acessa-la");
+        }
         return UsuarioMapper.toDTO(usuario);
     }
 

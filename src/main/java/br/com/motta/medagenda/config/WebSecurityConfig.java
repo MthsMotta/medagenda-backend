@@ -1,6 +1,9 @@
 package br.com.motta.medagenda.config;
 
+import br.com.motta.medagenda.security.CustomAuthenticationEntryPoint;
 import br.com.motta.medagenda.security.SecurityFilter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,12 +20,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@SecurityScheme(name = WebSecurityConfig.SECURITY, type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 public class WebSecurityConfig {
 
-    private final SecurityFilter securityFilter;
+    public static final String SECURITY = "bearerAuth";
 
-    public WebSecurityConfig(SecurityFilter securityFilter) {
+    private final SecurityFilter securityFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
+    public WebSecurityConfig(SecurityFilter securityFilter, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.securityFilter = securityFilter;
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
     }
 
     @Bean
@@ -30,6 +38,7 @@ public class WebSecurityConfig {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("ADMIN")
@@ -41,7 +50,8 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/medicos/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/medicos/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/medicos/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/pacientes/**").hasAnyRole("ADMIN", "MEDICO")
+                        .requestMatchers(HttpMethod.GET, "/pacientes").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/pacientes/{id}").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/pacientes/{id}").hasAnyRole("PACIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/pacientes/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/especialidades").hasRole("ADMIN")
@@ -62,6 +72,7 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/consultas/{id}/realizada").hasAnyRole("ADMIN", "MEDICO")
                         .requestMatchers(HttpMethod.PUT, "/consultas/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/consultas/{id}").authenticated()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
